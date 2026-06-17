@@ -1,7 +1,7 @@
 # Dolt Library — Django + Dolt demo
 
 A Django web app backed by [Dolt](https://docs.dolthub.com/), a SQL database with
-Git-like version control. Demonstrates a **shared field** (`author_name`) stored in
+Git-like version control. Demonstrates a shared field (`author_name`) stored in
 both the `Author` and `Book` tables, with drift detection/repair.
 
 ---
@@ -13,6 +13,7 @@ both the `Author` and `Book` tables, with drift detection/repair.
 - MySQL:
   - macOS: `brew install mysql-client pkg-config`
   - Ubuntu/Debian: `sudo apt install libmysqlclient-dev`
+  - Windows: `pip install mysqlclient`
 
 ---
 
