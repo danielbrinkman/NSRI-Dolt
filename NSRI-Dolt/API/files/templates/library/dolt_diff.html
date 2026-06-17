@@ -1,0 +1,41 @@
+{% extends "library/base.html" %}
+{% block title %}Diff — Dolt Library{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Working Set Diff</h1>
+  <p>Comparing <code style="font-family:var(--mono);color:var(--accent);font-size:0.8em">WORKING</code> vs <code style="font-family:var(--mono);color:var(--accent);font-size:0.8em">HEAD</code> — uncommitted changes.</p>
+</div>
+
+<h2>Authors table</h2>
+{% if author_diff %}
+<div class="table-wrap">
+  <table>
+    <thead><tr>{% for key in author_diff.0.keys %}<th>{{ key }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {% for row in author_diff %}
+      <tr>{% for val in row.values %}<td>{{ val }}</td>{% endfor %}</tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p style="color:var(--muted);font-size:0.85rem;margin-bottom:1.5rem">No uncommitted changes in authors.</p>
+{% endif %}
+
+<h2>Books table</h2>
+{% if book_diff %}
+<div class="table-wrap">
+  <table>
+    <thead><tr>{% for key in book_diff.0.keys %}<th>{{ key }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {% for row in book_diff %}
+      <tr>{% for val in row.values %}<td>{{ val }}</td>{% endfor %}</tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p style="color:var(--muted);font-size:0.85rem">No uncommitted changes in books.</p>
+{% endif %}
+{% endblock %}
