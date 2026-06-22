@@ -1,0 +1,215 @@
+{% extends "library/base.html" %}
+{% block title %}Catalogue — Dolt Library{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Library Catalogue</h1>
+  <p>Authors and books share <code style="font-family:var(--mono);font-size:0.8em;color:var(--accent)">author_name</code> — a denormalised field kept in sync across both tables.</p>
+</div>
+
+{% if drifted %}
+<div class="drift-banner">
+  <span>⚠</span>
+  <div>
+    <strong>{{ drifted|length }} drift{{ drifted|length|pluralize }} detected</strong> —
+    Book.author_name doesn't match Author.name.
+    <form method="post" action="{% url 'fix_drift' %}" style="display:inline">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary" style="margin-left:12px">Fix &amp; Commit</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- Authors -->
+<div class="section-header">
+  <h2 style="margin:0">Authors</h2>
+  <a href="{% url 'author_create' %}" class="btn btn-primary">+ Add Author</a>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Born</th>
+        <th>Bio</th>
+        <th>Books</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for author in authors %}
+      <tr>
+        <td><strong>{{ author.name }}</strong></td>
+        <td>{{ author.birth_year|default:"—" }}</td>
+        <td style="color:var(--muted);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          {{ author.bio|default:"—"|truncatechars:60 }}
+        </td>
+        <td><span class="pill">{{ author.books.count }}</span></td>
+        <td>
+          <div class="actions">
+            <a href="{% url 'author_edit' author.pk %}" class="btn btn-ghost">Edit</a>
+            <a href="{% url 'author_delete' author.pk %}" class="btn btn-danger">Delete</a>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" style="color:var(--muted);font-style:italic">No authors yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Libraries -->
+<div class="section-header">
+  <h2 style="margin:0">Libraries</h2>
+  <a href="{% url 'library_create' %}" class="btn btn-primary">+ Add Library</a>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Location</th>
+        <th>Books</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for library in libraries %}
+      <tr>
+        <td><strong>{{ library.name }}</strong></td>
+        <td style="color:var(--muted)">{{ library.location|default:"—" }}</td>
+        <td><span class="pill">{{ library.books.count }}</span></td>
+        <td>
+          <div class="actions">
+            <a href="{% url 'library_edit' library.pk %}" class="btn btn-ghost">Edit</a>
+            <a href="{% url 'library_delete' library.pk %}" class="btn btn-danger">Delete</a>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" style="color:var(--muted);font-style:italic">No libraries yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Books -->
+<div class="section-header">
+  <h2 style="margin:0">Books</h2>
+  <a href="{% url 'book_create' %}" class="btn btn-primary">+ Add Book</a>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>author_name <span style="font-style:italic;text-transform:none;letter-spacing:0">(book field)</span></th>
+        <th>Author FK → name</th>
+        <th>Year</th>
+        <th>ISBN</th>
+        <th>Library</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for book in books %}
+      <tr>
+        <td><strong>{{ book.title }}</strong></td>
+        <td>
+          {% if book in drifted %}
+            <span class="pill drift">{{ book.author_name }}</span>
+          {% else %}
+            <span style="font-family:var(--mono);font-size:0.8em">{{ book.author_name }}</span>
+          {% endif %}
+        </td>
+        <td style="color:var(--muted)">
+          {% if book.author %}{{ book.author.name }}{% else %}—{% endif %}
+        </td>
+        <td>{{ book.published_year|default:"—" }}</td>
+        <td style="font-family:var(--mono);font-size:0.75em;color:var(--muted)">{{ book.isbn|default:"—" }}</td>
+        <td style="color:var(--muted)">{% if book.library %}{{ book.library.name }}{% else %}—{% endif %}</td>
+        <td>
+          <div class="actions">
+            <a href="{% url 'book_edit' book.pk %}" class="btn btn-ghost">Edit</a>
+            <a href="{% url 'book_delete' book.pk %}" class="btn btn-danger">Delete</a>
+            <form method="post" action="{% url 'book_move' book.pk %}" style="display:inline">
+              {% csrf_token %}
+              <select name="library">
+                <option value="">Move to...</option>
+                {% for lib in libraries %}
+                  <option value="{{ lib.pk }}">{{ lib.name }}</option>
+                {% endfor %}
+              </select>
+              <button class="btn btn-ghost" type="submit">Move</button>
+            </form>
+            <form method="post" action="{% url 'book_display' book.pk %}" style="display:inline">
+              {% csrf_token %}
+              <select name="display">
+                <option value="">Add to display...</option>
+                {% for d in active_displays %}
+                  <option value="{{ d.pk }}">{{ d.title }}</option>
+                {% endfor %}
+              </select>
+              <button class="btn btn-ghost" type="submit">Add</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" style="color:var(--muted);font-style:italic">No books yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="section-header">
+  <h2 style="margin:0">Active Displays</h2>
+  <a href="{% url 'display_create' %}" class="btn btn-primary">+ Add Display</a>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Library</th>
+        <th>Books</th>
+        <th>Since</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in active_displays %}
+      <tr>
+        <td><strong>{{ d.title }}</strong></td>
+        <td style="color:var(--muted)">{{ d.library.name }}</td>
+        <td style="color:var(--muted)">
+          {% for book in d.books.all %}
+            <span class="pill">{{ book.title }}</span>
+          {% empty %}
+            —
+          {% endfor %}
+        </td>
+        <td style="color:var(--muted)">{{ d.start_date|date:"Y-m-d H:i" }}</td>
+        <td>
+          <div class="actions">
+            <a href="{% url 'display_edit' d.pk %}" class="btn btn-ghost">Edit</a>
+            <form method="post" action="{% url 'end_display' d.pk %}" style="display:inline">
+              {% csrf_token %}
+              <button class="btn btn-ghost" type="submit">End</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" style="color:var(--muted);font-style:italic">No active displays.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
