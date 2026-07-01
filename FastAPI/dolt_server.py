@@ -18,7 +18,9 @@ app = FastAPI()
 @app.post("/query/")
 async def create_item(item: DoltReq):
     if (await authenticated(item)):
+        # match only works in python 3.10 and above, so might need to rework as if, elif, else...
         match item.action:
+            # if the user is going to make a query:
             case "query":
                 if item.query:
                     try:
@@ -27,11 +29,13 @@ async def create_item(item: DoltReq):
                         return {"authentication" : await authenticated(item), "value" : "Bad query, could not complete request."}
                 else:
                     return {"authentication" : await authenticated(item), "value" : "No query string provided, could not complete request."}
+            # for authentication checks, no query needed
             case "auth":
                 try:
                     return {"authentication" : await authenticated(item), "value" : "Authentication completed."}
                 except:
                     return {"authentication" : await authenticated(item), "value" : "Credentials not accepted."}
+            # for any other non-matching action
             case _:
                 return {"authentication" : await authenticated(item), "value" : "Invalid action."}
     else:
